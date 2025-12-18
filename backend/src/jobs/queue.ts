@@ -2,26 +2,22 @@ import Bull from 'bull';
 import redis from '../config/redis';
 import { logger } from '../utils/logger';
 
+const redisConfig = {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD,
+};
+
 export const webhookQueue = new Bull('webhook-processing', {
-  redis: process.env.REDIS_URL
+  redis: redisConfig,
 });
 
 export const notificationQueue = new Bull('notifications', {
-  redis: process.env.REDIS_URL
+  redis: redisConfig,
 });
 
-// Process webhook events
-webhookQueue.process(async (job) => {
-  logger.info(`Processing webhook job ${job.id}`);
-  const { processWebhookJob } = await import('./processWebhook.job');
-  return processWebhookJob(job.data);
-});
-
-// Process notifications
-notificationQueue.process(async (job) => {
-  logger.info(`Processing notification job ${job.id}`);
-  const { sendNotificationJob } = await import('./sendNotification.job');
-  return sendNotificationJob(job.data);
+export const pricingQueue = new Bull('pricing', {
+  redis: redisConfig,
 });
 
 logger.info('✅ Job queues initialized');
